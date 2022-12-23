@@ -14,6 +14,26 @@ import java.util.List;
 
 public class FileType {
 	
+	private List<String> originalHexDB = null;
+	private List<String> originalExtDB = null;
+	
+	public List<String> getOriginalHexDB() {
+		return originalHexDB;
+	}
+
+	public void setOriginalHexDB(List<String> originalHexDB) {
+		this.originalHexDB = originalHexDB;
+	}
+
+	public List<String> getOriginalExtDB() {
+		return originalExtDB;
+	}
+
+	public void setOriginalExtDB(List<String> originalExtDB) {
+		this.originalExtDB = originalExtDB;
+	}
+
+
 	public String signature(String path) {
 		String extension;
         StringBuilder hex = null;
@@ -23,7 +43,8 @@ public class FileType {
         try {
             hex = convertToHex(file);
             if (!extension.equalsIgnoreCase("txt")) {
-                result = getSignature(hex, extension, file.getName());
+            	
+                result = match(originalHexDB, originalExtDB, hex, extension, file.getName());
             } else {
             	result = "txt";
             } 
@@ -36,6 +57,8 @@ public class FileType {
 
 	
 	public static StringBuilder convertToHex(File file) throws IOException {
+		
+		long start = System.currentTimeMillis();
         
 		try(InputStream is = new FileInputStream(file)) {
 			int bytesCounter = 0;
@@ -58,13 +81,17 @@ public class FileType {
 	            }
 	            sbResult.append(sbHex).append("\n");
 	        }
+	        
+	        long end = System.currentTimeMillis();
+	        
+	        System.out.println(end - start);
+	        
 	        StringBuilder deneme = sbResult;
 	        return deneme;
 		}
     }
 	
-	public String getSignature(StringBuilder hex, String extension, String file) {
-		List<String> description = new ArrayList<>();
+	public void getSignature() {
 		List<String> hexDB = new ArrayList<>();
 		List<String> extDB = new ArrayList<>();
 		
@@ -72,26 +99,27 @@ public class FileType {
 		
         try {
         	Class.forName("oracle.jdbc.driver.OracleDriver");
-        	conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "", "");
-            String query = "select hex, ext, description from signaturedb";
+        	conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "system");
+            String query = "select hex, ext from signaturedb";
             try (conn; PreparedStatement preparedstatement = conn.prepareStatement(query);
             		ResultSet rs = preparedstatement.executeQuery()) {
             	while (rs.next()) {
                     hexDB.add(rs.getString("hex"));
-                    description.add(rs.getString("description"));
                     extDB.add(rs.getString("ext"));
                 }
+            	
+            	setOriginalHexDB(hexDB);
+            	setOriginalExtDB(extDB);
+            	
             } catch (SQLException e) {
             	e.printStackTrace();
             }
         } catch (SQLException | ClassNotFoundException e) {
         	e.printStackTrace();
         }
-        
-        return match(hexDB, extDB, description, hex, extension, file);
 	}
 	
-	public String match(List<String> hexDB, List<String> extDB, List<String> description, StringBuilder hex, String ext, String file) {
+	public String match(List<String> hexDB, List<String> extDB, StringBuilder hex, String ext, String file) {
 		
 		int counter = 0;
 		String result = "";

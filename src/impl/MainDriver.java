@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+
 import utils.FileType;
 import utils.LuceneIndexUtils;
 
@@ -15,6 +17,9 @@ public class MainDriver {
 	public static void main(String[] args) {
 		
 		LuceneIndexUtils utils = new LuceneIndexUtils("indexLocation");
+		
+		// fetch list of hex and corresponding file type from DB
+		obj.getSignature();
 		
 		try {
 			Files.walk(Path.of("C:\\Users\\Clinton\\Desktop\\TestFiles"))
@@ -28,7 +33,13 @@ public class MainDriver {
 						case "pdf":
 							// PDF Files Handling
 							try {
-								utils.indexPDFDocument(file, utils.getIdxWriter(), utils.getIdxWriterConfig());
+								if (utils.isCreateNew()) {
+									utils.indexPDFDocument(file, utils.getIdxWriter(), utils.getIdxWriterConfig());
+									utils.getIdxWriterConfig().setOpenMode(OpenMode.APPEND);
+								} else {
+									utils.indexPDFDocument(file, utils.getIdxWriter(), utils.getIdxWriterConfig());
+								}
+								
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
