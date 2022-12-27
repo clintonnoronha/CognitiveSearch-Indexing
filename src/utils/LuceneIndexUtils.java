@@ -17,7 +17,10 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import impl.CustomAnalyzerImpl;
+import impl.DocxIndexerImpl;
 import impl.PDFIndexerImpl;
+import impl.PptxIndexerImpl;
+import impl.TextIndexerImpl;
 
 public class LuceneIndexUtils {
 
@@ -101,7 +104,7 @@ public class LuceneIndexUtils {
         }
     }
     
-    public void indexPDFDocument(File file, IndexWriter idxWriter, IndexWriterConfig idxWriterConfig) throws IOException {
+    public void indexDocument(File file, IndexWriter idxWriter, IndexWriterConfig idxWriterConfig, String fileType) throws IOException {
     	
         if(idxWriterConfig == null ) {
             //
@@ -111,8 +114,40 @@ public class LuceneIndexUtils {
 
         Document doc = null;
         
-        PDFIndexerImpl indexer = new PDFIndexerImpl();
-        doc = indexer.createDocument(file);
+        switch (fileType) {
+			case "application/pdf":
+				// PDF Files Handling
+				PDFIndexerImpl pdfIndexer = new PDFIndexerImpl();
+		        doc = pdfIndexer.createPDFDocument(file);
+				break;
+			case "text/plain":
+				// TXT Files Handling
+				TextIndexerImpl txtIndexer = new TextIndexerImpl();
+				doc = txtIndexer.createTextDocument(file);
+				break;
+			case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+				// DOCX Files Handling
+				DocxIndexerImpl docxIndexer = new DocxIndexerImpl();
+				doc = docxIndexer.createDocxDocument(file);
+				break;
+			case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+				// PPTX Files Handling
+				PptxIndexerImpl pptxIndexer = new PptxIndexerImpl();
+				doc = pptxIndexer.createPptxDocument(file);
+				break;
+				
+			/*			
+			case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+				// XLSX Files Handling
+				
+				break;
+				
+			*/	
+				
+			default:
+				// Other Files which aren't processable
+				break;	
+        }
 
         FieldType fieldType = new FieldType();
         fieldType.setStored(true);

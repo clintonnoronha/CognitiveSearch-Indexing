@@ -15,7 +15,6 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 public class PDFIndexerImpl {
@@ -33,7 +32,7 @@ public class PDFIndexerImpl {
         NON_INDEX_FIELD.freeze();
     }
 
-    public Document createDocument(File pdfFile) throws IOException{
+    public Document createPDFDocument(File pdfFile) throws IOException{
 
         Document doc = new Document();
         String fileModifiedTimeStr = DateTools.timeToString(pdfFile.lastModified(),DateTools.Resolution.SECOND);
@@ -52,7 +51,7 @@ public class PDFIndexerImpl {
         doc.add(new Field("uuidstring",uuid,TextField.TYPE_NOT_STORED));
 
         //read the pdf file using pdfbox and add the data
-        try(FileInputStream inputStream = new FileInputStream(pdfFile)){
+        try(FileInputStream inputStream = new FileInputStream(pdfFile)) {
             parsePDFAndAddContentToDocument(doc,inputStream,path);
         }
         return doc;
@@ -71,10 +70,12 @@ public class PDFIndexerImpl {
             //read the content and add to index as text field
             StringReader reader = new StringReader(strWriter.getBuffer().toString());
             //System.out.println("read content:- "+strWriter.getBuffer().toString());
-            doc.add(new TextField("pdfContent", reader));
+            doc.add(new TextField("Content", reader));
             
             // NOTE: if the pdf is password protected then it will throw 
             // invalidpasswordExcepton and cannot index the file
+            
+            /*
             
             // Metadata of the PDF that can be indexed
             PDDocumentInformation metaInfo = pdfDocument.getDocumentInformation();
@@ -82,7 +83,10 @@ public class PDFIndexerImpl {
             if(metaInfo != null) {
                 doc.add(new TextField("PDFAuthor", metaInfo.getAuthor(),Store.YES));
                 doc.add(new TextField("PDFCreationDate",metaInfo.getCreationDate().toString(),Store.YES));
-            }    
+            }
+            
+            */
+            
         }
     }
 }
